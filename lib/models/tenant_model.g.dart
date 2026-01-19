@@ -8,6 +8,7 @@ part of 'tenant_model.dart';
 
 Tenant _$TenantFromJson(Map<String, dynamic> json) => Tenant(
       id: json['id'] as String,
+  pgId: (json['pgId'] as String?) ?? 'default-pg',
       name: json['name'] as String,
       email: json['email'] as String,
       phone: json['phone'] as String,
@@ -36,6 +37,7 @@ Tenant _$TenantFromJson(Map<String, dynamic> json) => Tenant(
 
 Map<String, dynamic> _$TenantToJson(Tenant instance) => <String, dynamic>{
       'id': instance.id,
+      'pgId': instance.pgId,
       'name': instance.name,
       'email': instance.email,
       'phone': instance.phone,
@@ -108,6 +110,7 @@ Map<String, dynamic> _$VehicleDetailToJson(VehicleDetail instance) =>
 
 Room _$RoomFromJson(Map<String, dynamic> json) => Room(
       id: json['id'] as String,
+  pgId: (json['pgId'] as String?) ?? 'default-pg',
       roomNumber: json['roomNumber'] as String,
       capacity: (json['capacity'] as num).toInt(),
       monthlyRent: (json['monthlyRent'] as num).toDouble(),
@@ -122,6 +125,7 @@ Room _$RoomFromJson(Map<String, dynamic> json) => Room(
 
 Map<String, dynamic> _$RoomToJson(Room instance) => <String, dynamic>{
       'id': instance.id,
+      'pgId': instance.pgId,
       'roomNumber': instance.roomNumber,
       'capacity': instance.capacity,
       'monthlyRent': instance.monthlyRent,
@@ -129,4 +133,17 @@ Map<String, dynamic> _$RoomToJson(Room instance) => <String, dynamic>{
       'description': instance.description,
       'amenities': instance.amenities,
       'isAvailable': instance.isAvailable,
+    };
+
+PgProperty _$PgPropertyFromJson(Map<String, dynamic> json) => PgProperty(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      address: json['address'] as String?,
+    );
+
+Map<String, dynamic> _$PgPropertyToJson(PgProperty instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'address': instance.address,
     };

@@ -28,6 +28,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
   late TextEditingController vehicleColorController;
 
   String selectedRoom = '';
+  String selectedPgId = '';
   FoodPreference selectedFood = FoodPreference.vegetarian;
   bool hasVehicle = false;
   DateTime selectedDate = DateTime.now();
@@ -68,6 +69,14 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     if (_formKey.currentState!.validate()) {
       try {
         final provider = context.read<TenantProvider>();
+        final pgId = selectedPgId.isNotEmpty
+            ? selectedPgId
+            : provider.currentPgId ?? (provider.pgs.isNotEmpty ? provider.pgs.first.id : '');
+
+        if (pgId.isEmpty) {
+          throw Exception('No PG selected');
+        }
+
         final room = provider.rooms.firstWhere(
           (r) => r.id == selectedRoom,
           orElse: () => throw Exception('Selected room not found'),
@@ -85,6 +94,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
 
         final tenant = Tenant(
           id: const Uuid().v4(),
+          pgId: pgId,
           name: nameController.text,
           email: emailController.text,
           phone: phoneController.text,
@@ -104,6 +114,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
         // Mark room as occupied
         final updatedRoom = Room(
           id: room.id,
+          pgId: room.pgId,
           roomNumber: room.roomNumber,
           capacity: room.capacity,
           monthlyRent: room.monthlyRent,
@@ -113,6 +124,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
           isAvailable: false,
         );
         await provider.updateRoom(updatedRoom);
+        provider.setCurrentPg(pgId);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -228,29 +240,77 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
               const SizedBox(height: 16),
               Consumer<TenantProvider>(
                 builder: (context, provider, _) {
-                  return DropdownButtonFormField<String>(
-                    value: selectedRoom.isEmpty ? null : selectedRoom,
-                    decoration: InputDecoration(
-                      labelText: 'Assign Room',
-                      prefixIcon: const Icon(Icons.door_sliding),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  if (selectedPgId.isEmpty && provider.currentPgId != null) {
+                    selectedPgId = provider.currentPgId!;
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (provider.hasMultiplePgs)
+                        DropdownButtonFormField<String>(
+                          value: selectedPgId.isEmpty ? null : selectedPgId,
+                          decoration: InputDecoration(
+                            labelText: 'Select PG',
+                            prefixIcon: const Icon(Icons.home_work),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          items: provider.pgs
+                              .map((pg) => DropdownMenuItem(
+                                    value: pg.id,
+                                    child: Text(pg.name),
+                                  ))
+                              .toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedPgId = value ?? '';
+                              selectedRoom = '';
+                            });
+                          },
+                          validator: (value) {
+                            if (provider.hasMultiplePgs && (value == null || value.isEmpty)) {
+                              return 'Please select a PG';
+                            }
+                            return null;
+                          },
+                        )
+                      else
+                        Text(
+                          provider.pgs.isNotEmpty
+                              ? 'PG: ${provider.pgs.first.name}'
+                              : 'No PG configured',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      if (provider.hasMultiplePgs) const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: selectedRoom.isEmpty ? null : selectedRoom,
+                        decoration: InputDecoration(
+                          labelText: 'Assign Room',
+                          prefixIcon: const Icon(Icons.door_sliding),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        items: provider.roomsForPg(selectedPgId.isNotEmpty
+                                ? selectedPgId
+                                : provider.currentPgId ?? '')
+                            .where((r) => r.isAvailable)
+                            .map((room) => DropdownMenuItem(
+                                  value: room.id,
+                                  child: Text(room.roomNumber),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedRoom = value ?? '';
+                          });
+                        },
+                        validator: (value) =>
+                            value == null || value.isEmpty ? 'Room is required' : null,
                       ),
-                    ),
-                    items: provider.rooms
-                        .where((r) => r.isAvailable)
-                        .map((room) => DropdownMenuItem(
-                              value: room.id,
-                              child: Text(room.roomNumber),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedRoom = value ?? '';
-                      });
-                    },
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Room is required' : null,
+                    ],
                   );
                 },
               ),

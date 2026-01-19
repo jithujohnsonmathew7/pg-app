@@ -1,18 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/tenant_model.dart';
+import '../models/user_model.dart';
 import '../providers/tenant_provider.dart';
+import '../providers/auth_provider.dart';
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+class OwnerDashboardScreen extends StatelessWidget {
+  const OwnerDashboardScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard', style: TextStyle(color: Colors.white),),
+        title: const Text('Owner Dashboard', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade700,
         elevation: 0,
+        actions: [
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, _) {
+              return PopupMenuButton<void>(
+                itemBuilder: (context) => [
+                  PopupMenuItem<void>(
+                    enabled: false,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.person),
+                        const SizedBox(width: 8),
+                        Text(authProvider.currentUser?.name ?? 'User'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem<void>(
+                    onTap: () {
+                      authProvider.logout();
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/login',
+                        (route) => false,
+                      );
+                    },
+                    child: const Text('Logout'),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<TenantProvider>(
         builder: (context, provider, _) {
@@ -87,6 +120,31 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
 
+                // PG Selector (if multiple PGs)
+                if (provider.hasMultiplePgs) ...[
+                  const Text(
+                    'Switch PG',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButton<String>(
+                    value: provider.currentPgId,
+                    isExpanded: true,
+                    items: provider.pgs
+                        .map((pg) => DropdownMenuItem(
+                              value: pg.id,
+                              child: Text(pg.name),
+                            ))
+                        .toList(),
+                    onChanged: (pgId) {
+                      if (pgId != null) {
+                        provider.setCurrentPg(pgId);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                ],
+
                 // Recent Tenants
                 if (activeTenants.isNotEmpty) ...[
                   const Text(
@@ -111,8 +169,8 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                           title: Text(tenant.name),
-                          subtitle:
-                              Text('Room: ${roomLookup[tenant.roomId] ?? tenant.roomId}'),
+                          subtitle: Text(
+                              'Room: ${roomLookup[tenant.roomId] ?? tenant.roomId}'),
                           trailing: Text('₹${tenant.monthlyRent}'),
                         ),
                       );

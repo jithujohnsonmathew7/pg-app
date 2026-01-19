@@ -8,17 +8,47 @@ class TenantProvider extends ChangeNotifier {
   List<Tenant> _tenants = [];
   List<Room> _rooms = [];
   List<PaymentRecord> _allPayments = [];
+  List<PgProperty> _pgs = [];
+  String? _currentPgId;
 
   TenantProvider(this._database);
 
   List<Tenant> get tenants => _tenants;
   List<Room> get rooms => _rooms;
   List<PaymentRecord> get allPayments => _allPayments;
+    List<PgProperty> get pgs => _pgs;
+    String? get currentPgId => _currentPgId;
+    bool get hasMultiplePgs => _pgs.length > 1;
+
+    List<Room> get roomsForCurrentPg => _currentPgId == null
+      ? _rooms
+      : _rooms.where((room) => room.pgId == _currentPgId).toList();
+
+    List<Tenant> get tenantsForCurrentPg => _currentPgId == null
+      ? _tenants
+      : _tenants.where((tenant) => tenant.pgId == _currentPgId).toList();
+
+    List<Room> roomsForPg(String pgId) =>
+      _rooms.where((room) => room.pgId == pgId).toList();
+
+    List<PgProperty> getPgList() => List.unmodifiable(_pgs);
 
   Future<void> loadAllData() async {
     try {
+      _pgs = await _database.getAllPgs();
+      if (_pgs.isEmpty) {
+        final defaultPg = PgProperty(
+          id: 'default-pg',
+          name: 'Default PG',
+          address: 'Owner default property',
+        );
+        await _database.addPg(defaultPg);
+        _pgs = [defaultPg];
+      }
+      _currentPgId ??= _pgs.first.id;
       _tenants = await _database.getAllTenants();
       _rooms = await _database.getAllRooms();
+      _allPayments = await _database.getAllPayments();
       notifyListeners();
     } catch (e) {
       print('Error loading data: $e');
@@ -113,5 +143,17 @@ class TenantProvider extends ChangeNotifier {
         .where((p) =>
             p.tenantId == tenantId && p.paymentType == PaymentType.rent)
         .fold(0.0, (sum, p) => sum + p.amount);
+  }
+
+  Future<void> addPg(PgProperty pg) async {
+    await _database.addPg(pg);
+    _pgs.add(pg);
+    _currentPgId ??= pg.id;
+    notifyListeners();
+  }
+
+  void setCurrentPg(String pgId) {
+    _currentPgId = pgId;
+    notifyListeners();
   }
 }

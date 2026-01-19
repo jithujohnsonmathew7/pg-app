@@ -1,25 +1,75 @@
 import 'package:hive/hive.dart';
 import '../models/tenant_model.dart';
+import '../models/user_model.dart';
 
 class DatabaseService {
   static const String tenantBoxName = 'tenants';
   static const String roomBoxName = 'rooms';
   static const String paymentBoxName = 'payments';
+  static const String pgBoxName = 'pgs';
+  static const String userBoxName = 'users';
 
   late Box<Map> tenantBox;
   late Box<Map> roomBox;
   late Box<Map> paymentBox;
+  late Box<Map> pgBox;
+  late Box<Map> userBox;
 
   Future<void> initDatabase() async {
     try {
       tenantBox = await Hive.openBox<Map>(tenantBoxName);
       roomBox = await Hive.openBox<Map>(roomBoxName);
       paymentBox = await Hive.openBox<Map>(paymentBoxName);
+      pgBox = await Hive.openBox<Map>(pgBoxName);
+      userBox = await Hive.openBox<Map>(userBoxName);
     } catch (e) {
       print('Error initializing database: $e');
       rethrow;
     }
   }
+
+  // PG Operations
+  Future<void> addPg(PgProperty pg) async {
+    await pgBox.put(pg.id, pg.toJson());
+  }
+
+  Future<void> updatePg(PgProperty pg) async {
+    await pgBox.put(pg.id, pg.toJson());
+  }
+
+  Future<List<PgProperty>> getAllPgs() async {
+    final pgs = <PgProperty>[];
+    for (var value in pgBox.values) {
+      pgs.add(PgProperty.fromJson(Map<String, dynamic>.from(value)));
+    }
+    return pgs;
+  }
+
+  // User Operations
+  Future<void> addUser(User user) async {
+    await userBox.put(user.id, user.toJson());
+  }
+
+  Future<void> updateUser(User user) async {
+    await userBox.put(user.id, user.toJson());
+  }
+
+  Future<User?> getUser(String userId) async {
+    final data = userBox.get(userId);
+    if (data != null) {
+      return User.fromJson(Map<String, dynamic>.from(data));
+    }
+    return null;
+  }
+
+  Future<List<User>> getAllUsers() async {
+    final users = <User>[];
+    for (var value in userBox.values) {
+      users.add(User.fromJson(Map<String, dynamic>.from(value)));
+    }
+    return users;
+  }
+
 
   // Tenant Operations
   Future<void> addTenant(Tenant tenant) async {
@@ -101,9 +151,19 @@ class DatabaseService {
     return payments..sort((a, b) => b.paymentDate.compareTo(a.paymentDate));
   }
 
+  Future<List<PaymentRecord>> getAllPayments() async {
+    final payments = <PaymentRecord>[];
+    for (var value in paymentBox.values) {
+      payments.add(PaymentRecord.fromJson(Map<String, dynamic>.from(value)));
+    }
+    return payments;
+  }
+
   Future<void> clearAllData() async {
     await tenantBox.clear();
     await roomBox.clear();
     await paymentBox.clear();
+    await pgBox.clear();
+    await userBox.clear();
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/tenant_model.dart';
 import '../providers/tenant_provider.dart';
-import '../services/database_service.dart';
 
 class RoomManagementScreen extends StatefulWidget {
   const RoomManagementScreen({Key? key}) : super(key: key);
@@ -122,16 +121,21 @@ class _RoomManagementScreenState extends State<RoomManagementScreen> {
           ElevatedButton(
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
+                final provider = context.read<TenantProvider>();
+                final pgId = provider.currentPgId ??
+                    (provider.pgs.isNotEmpty ? provider.pgs.first.id : 'default-pg');
+
                 final room = Room(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  pgId: pgId,
                   roomNumber: roomNumberController.text,
-                    capacity: selectedCapacity,
+                  capacity: selectedCapacity,
                   monthlyRent: double.parse(rentController.text),
                   description: descriptionController.text,
                   isAvailable: true,
                 );
 
-                await context.read<TenantProvider>().addRoom(room);
+                await provider.addRoom(room);
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -156,7 +160,7 @@ class _RoomManagementScreenState extends State<RoomManagementScreen> {
       ),
       body: Consumer<TenantProvider>(
         builder: (context, provider, _) {
-          final rooms = provider.rooms;
+          final rooms = provider.roomsForCurrentPg;
 
           if (rooms.isEmpty) {
             return Center(
@@ -170,7 +174,7 @@ class _RoomManagementScreenState extends State<RoomManagementScreen> {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'No rooms added yet',
+                    'No rooms added yet for this PG',
                     style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                 ],

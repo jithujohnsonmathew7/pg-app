@@ -4,10 +4,23 @@ import 'package:uuid/uuid.dart';
 import '../models/tenant_model.dart';
 
 class SampleData {
+  static List<PgProperty> getSamplePgs() {
+    return [
+      PgProperty(
+        id: const Uuid().v4(),
+        name: 'Central PG',
+        address: '123 Main Street, City',
+      ),
+    ];
+  }
+
   static List<Room> getSampleRooms() {
+    final pgs = getSamplePgs();
+    final defaultPgId = pgs.first.id;
     return [
       Room(
         id: const Uuid().v4(),
+        pgId: defaultPgId,
         roomNumber: '101',
         capacity: 1,
         monthlyRent: 5000,
@@ -17,6 +30,7 @@ class SampleData {
       ),
       Room(
         id: const Uuid().v4(),
+        pgId: defaultPgId,
         roomNumber: '102',
         capacity: 2,
         monthlyRent: 8000,
@@ -26,6 +40,7 @@ class SampleData {
       ),
       Room(
         id: const Uuid().v4(),
+        pgId: defaultPgId,
         roomNumber: '201',
         capacity: 1,
         monthlyRent: 5500,
@@ -35,6 +50,7 @@ class SampleData {
       ),
       Room(
         id: const Uuid().v4(),
+        pgId: defaultPgId,
         roomNumber: '202',
         capacity: 3,
         monthlyRent: 12000,
@@ -52,6 +68,7 @@ class SampleData {
     return [
       Tenant(
         id: const Uuid().v4(),
+        pgId: room1.pgId,
         name: 'Rajesh Kumar',
         email: 'rajesh@example.com',
         phone: '9876543210',
@@ -73,6 +90,7 @@ class SampleData {
       ),
       Tenant(
         id: const Uuid().v4(),
+        pgId: room2.pgId,
         name: 'Priya Singh',
         email: 'priya@example.com',
         phone: '9876543211',

@@ -25,13 +25,14 @@ class _TenantsListScreenState extends State<TenantsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PG Management', style: TextStyle(color: Colors.white),),
+        title: const Text('PG Flow', style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.blue.shade700,
         elevation: 0,
       ),
       body: Consumer<TenantProvider>(
         builder: (context, provider, _) {
-          final tenants = provider.tenants.where((t) => t.isActive).toList();
+          final tenants =
+              provider.tenantsForCurrentPg.where((t) => t.isActive).toList();
 
           if (tenants.isEmpty) {
             return Center(
@@ -72,6 +73,16 @@ class _TenantsListScreenState extends State<TenantsListScreen> {
             itemCount: tenants.length,
             itemBuilder: (context, index) {
               final tenant = tenants[index];
+              final roomNumber = provider.rooms
+                  .firstWhere((r) => r.id == tenant.roomId, orElse: () => Room(
+                        id: tenant.roomId,
+                        pgId: tenant.pgId,
+                        roomNumber: tenant.roomId,
+                        capacity: 1,
+                        monthlyRent: tenant.monthlyRent,
+                        isAvailable: true,
+                      ))
+                  .roomNumber;
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                 child: ListTile(
@@ -89,7 +100,7 @@ class _TenantsListScreenState extends State<TenantsListScreen> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Room: ${tenant.roomId}'),
+                      Text('Room: $roomNumber'),
                       Text('Phone: ${tenant.phone}'),
                     ],
                   ),

@@ -120,6 +120,7 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
                 (r) => r.id == updatedTenant.roomId,
                 orElse: () => Room(
                   id: updatedTenant.roomId,
+                  pgId: updatedTenant.pgId,
                   roomNumber: '',
                   capacity: 1,
                   monthlyRent: 0,
@@ -129,6 +130,7 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
 
               final updatedRoom = Room(
                 id: room.id,
+                pgId: room.pgId,
                 roomNumber: room.roomNumber,
                 capacity: room.capacity,
                 monthlyRent: room.monthlyRent,

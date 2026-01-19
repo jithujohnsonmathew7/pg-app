@@ -5,6 +5,7 @@ part 'tenant_model.g.dart';
 @JsonSerializable()
 class Tenant {
   final String id;
+  final String pgId;
   final String name;
   final String email;
   final String phone;
@@ -22,6 +23,7 @@ class Tenant {
 
   Tenant({
     required this.id,
+    required this.pgId,
     required this.name,
     required this.email,
     required this.phone,
@@ -43,6 +45,7 @@ class Tenant {
 
   Tenant copyWith({
     String? id,
+    String? pgId,
     String? name,
     String? email,
     String? phone,
@@ -60,6 +63,7 @@ class Tenant {
   }) {
     return Tenant(
       id: id ?? this.id,
+      pgId: pgId ?? this.pgId,
       name: name ?? this.name,
       email: email ?? this.email,
       phone: phone ?? this.phone,
@@ -125,6 +129,7 @@ class VehicleDetail {
 @JsonSerializable()
 class Room {
   final String id;
+  final String pgId;
   final String roomNumber;
   final int capacity;
   final double monthlyRent;
@@ -135,6 +140,7 @@ class Room {
 
   Room({
     required this.id,
+    required this.pgId,
     required this.roomNumber,
     required this.capacity,
     required this.monthlyRent,
@@ -146,6 +152,23 @@ class Room {
 
   factory Room.fromJson(Map<String, dynamic> json) => _$RoomFromJson(json);
   Map<String, dynamic> toJson() => _$RoomToJson(this);
+}
+
+@JsonSerializable()
+class PgProperty {
+  final String id;
+  final String name;
+  final String? address;
+
+  PgProperty({
+    required this.id,
+    required this.name,
+    this.address,
+  });
+
+  factory PgProperty.fromJson(Map<String, dynamic> json) =>
+      _$PgPropertyFromJson(json);
+  Map<String, dynamic> toJson() => _$PgPropertyToJson(this);
 }
 
 enum FoodPreference {
